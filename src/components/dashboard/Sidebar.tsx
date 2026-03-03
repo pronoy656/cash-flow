@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
@@ -13,22 +14,23 @@ import {
   MessageSquare,
   Scale,
   LogOut,
+  LucideIcon,
 } from "lucide-react";
 
-type IconType = (props: { className?: string }) => JSX.Element;
+type IconType = LucideIcon;
 
 const items: Array<{
   href: string;
   label: string;
   Icon: IconType;
 }> = [
-  { href: "/overview", label: "Overview", Icon: LayoutDashboard },
-  { href: "/users", label: "User Management", Icon: Users },
-  { href: "/subscription", label: "Subscription", Icon: CreditCard },
-  { href: "/documents", label: "Documents & Audit", Icon: FileText },
-  { href: "/chat", label: "Chat", Icon: MessageSquare },
-  { href: "/legal", label: "Legal & Content", Icon: Scale },
-];
+    { href: "/overview", label: "Overview", Icon: LayoutDashboard },
+    { href: "/users", label: "User Management", Icon: Users },
+    { href: "/subscription", label: "Subscription", Icon: CreditCard },
+    { href: "/documents", label: "Documents & Audit", Icon: FileText },
+    { href: "/chat", label: "Chat", Icon: MessageSquare },
+    { href: "/legal", label: "Legal & Content", Icon: Scale },
+  ];
 
 export default function Sidebar({ active }: { active?: string }) {
   const pathname = usePathname();
@@ -57,7 +59,7 @@ export default function Sidebar({ active }: { active?: string }) {
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-white/10 transition-colors",
               (current === item.href || current.startsWith(item.href)) &&
-                "bg-[var(--brand)] text-white hover:bg-[var(--brand)]",
+              "bg-[var(--brand)] text-white hover:bg-[var(--brand)]",
             )}
           >
             <item.Icon className="h-4 w-4" />
