@@ -17,15 +17,26 @@ export default function ResetEmailForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm">Email</label>
-        <Input type="email" required placeholder="you@example.com" />
+    <div className="w-full">
+      <div className="text-center mb-10">
+        <h1 className="text-3xl font-bold mb-2 text-white">Forgot Password</h1>
+        <p className="text-white/50">Enter your email to receive a reset code</p>
       </div>
-      <Button type="submit" className="w-full bg-[var(--brand)]" disabled={loading}>
-        {loading ? "Sending..." : "Send Reset Link"}
-      </Button>
-    </form>
+      <form onSubmit={onSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label className="text-sm">Email</label>
+          <Input
+            type="email"
+            required
+            placeholder="you@example.com"
+            className="h-12 bg-white/5 border-white/5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/50"
+          />
+        </div>
+        <Button variant="premium" type="submit" className="w-full h-12 text-base" disabled={loading}>
+          {loading ? "Sending..." : "Send Reset Link"}
+        </Button>
+      </form>
+    </div>
   );
 }
 

@@ -11,54 +11,59 @@ type AuthLayoutShellProps = PropsWithChildren<{
 
 export default function AuthLayoutShell({
   children,
-  title = "Welcome back",
-  subtitle = "Sign in to manage CashFlowIQ",
 }: AuthLayoutShellProps) {
   return (
-    <div className="min-h-screen grid md:grid-cols-2 auth-surface text-white">
-      <div className="relative hidden md:block">
+    <div className="min-h-screen grid md:grid-cols-2 bg-[#090E1A] text-white">
+      {/* Left Side: Hero Image and Text */}
+      <div className="relative hidden md:block overflow-hidden">
         <Image
-          src="/auth-hero.jpg"
-          alt="Auth"
+          src="/Accept tasks-bro 1.png"
+          alt="Auth Hero"
           priority
           fill
-          className="object-cover opacity-90"
+          className="object-cover"
         />
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute inset-0 flex items-end p-10">
-          <div>
-            <Image
-              src="/logo.png"
-              alt="CashFlowIQ"
-              width={180}
-              height={48}
-              className="mb-6"
-            />
-            <p className="max-w-md text-foreground/90">
-              Track income and expenses accurately. Gain insights to grow your
-              business with confidence.
-            </p>
-          </div>
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+        {/* Hero Text Content */}
+        <div className="absolute bottom-0 left-0 right-0 p-12 space-y-4">
+          <h2 className="text-5xl font-bold italic leading-tight">
+            Financial Overview & <br /> Control
+          </h2>
+          <p className="max-w-md text-white/70 text-lg leading-relaxed">
+            Monitor platform revenue, commissions, and expenses in real time.
+            Gain a clear overview of financial performance and ensure accurate
+            reporting across the system.
+          </p>
         </div>
       </div>
-      <div className="flex items-center justify-center p-6">
-        <Card className="w-full max-w-md bg-white/5 backdrop-blur border-white/10">
-          <CardContent className="p-8">
-            <div className="mb-6 flex items-center gap-3">
-              <Image src="/logo.png" alt="logo" width={36} height={36} />
-              <span className="text-xl font-semibold">CashFlowIQ Admin</span>
+
+      {/* Right Side: Login Form */}
+      <div className="flex flex-col items-center justify-center p-8 md:p-12">
+        <div className="w-full max-w-[500px] flex flex-col items-center text-center">
+          {/* Logo Card Section */}
+          <div className="mb-12 relative">
+            <div className="w-44 h-44 bg-[#111827] rounded-3xl border border-white/5 flex items-center justify-center  relative overflow-hidden">
+              {/* Subtle Blue Glow Overlay */}
+              <div className="absolute inset-0 bg-blue-500/5" />
+
+              <div className="relative w-44 h-44">
+                <Image
+                  src="/image 11 (2).png"
+                  alt="CashFlowIQ Logo"
+                  fill
+                  className="object-contain"
+                />
+              </div>
             </div>
-            <h1 className="text-2xl font-semibold mb-2">{title}</h1>
-            <p className="text-sm text-muted-foreground mb-6">{subtitle}</p>
+          </div>
+
+          {/* Form Content */}
+          <div className="w-full text-left">
             {children}
-            <p className="mt-8 text-xs text-muted-foreground">
-              © {new Date().getFullYear()} CashFlowIQ. All rights reserved.{" "}
-              <Link href="/legal" className="text-primary underline">
-                Legal
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

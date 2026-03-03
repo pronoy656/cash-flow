@@ -44,17 +44,30 @@ We collect usage data to improve the service.
           Manage Terms of Service and Privacy Policy documents.
         </p>
       </div>
-      <div className="flex items-center justify-between">
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList>
-            <TabsTrigger value="terms">Terms & Conditions</TabsTrigger>
-            <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
-          </TabsList>
+      <div className="flex flex-col items-center gap-6">
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
+          <div className="flex justify-center mb-8">
+            <TabsList className="bg-[#141f31] border border-white/10 p-1">
+              <TabsTrigger
+                value="terms"
+                className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60"
+              >
+                Terms & Conditions
+              </TabsTrigger>
+              <TabsTrigger
+                value="privacy"
+                className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60"
+              >
+                Privacy Policy
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </Tabs>
-        <Button className="relative">
-          <span className="mr-2">💾</span> Save Changes
-          <span className="pointer-events-none absolute -top-3 -right-3 h-10 w-10 rounded-full bg-[var(--brand)]/30 blur-lg" />
-        </Button>
+        <div className="w-full flex justify-end">
+          <Button variant="premium" onClick={save}>
+            💾 Save Changes
+          </Button>
+        </div>
       </div>
       {tab === "terms" ? (
         <EditorPanel
@@ -163,7 +176,7 @@ function EditorPanel({
         <Textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="min-h-[420px] font-mono text-sm bg-black/30 border-white/10"
+          className="min-h-[420px] font-mono text-sm bg-black/40 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-white/20"
         />
       </CardContent>
     </Card>

@@ -118,14 +118,31 @@ export default function DocumentsAudit() {
         </p>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="irs">IRS Notice</TabsTrigger>
-          <TabsTrigger value="case">Case File</TabsTrigger>
-        </TabsList>
-        <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-6">
-          <div className="border-2 border-dashed border-white/20 rounded-lg p-10 text-center">
+      <Tabs value={tab} onValueChange={setTab} className="w-full">
+        <div className="flex justify-center mb-8">
+          <TabsList className="bg-[#141f31] border border-white/10 p-1">
+            <TabsTrigger
+              value="all"
+              className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60"
+            >
+              All Documents
+            </TabsTrigger>
+            <TabsTrigger
+              value="irs"
+              className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60"
+            >
+              IRS Notices
+            </TabsTrigger>
+            <TabsTrigger
+              value="case"
+              className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60"
+            >
+              Case Files
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <div className="mt-4 rounded-xl border border-white/10 bg-[#141f31] p-6 shadow-sm">
+          <div className="border-2 border-dashed border-white/10 rounded-lg p-10 text-center bg-white/5 hover:bg-white/[0.07] transition-colors">
             <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
               <UploadCloud className="h-6 w-6 text-white/70" />
             </div>
@@ -133,19 +150,16 @@ export default function DocumentsAudit() {
             <p className="text-xs text-white/60 mb-4">
               Drag and drop your files here, or click to browse
             </p>
-            <Button>Select Files</Button>
+            <Button variant="premium">Select Files</Button>
             <p className="text-xs text-white/40 mt-3">
               Supported formats: PDF, JPG, PNG, DOCX (Max 25MB)
             </p>
           </div>
         </div>
-        <TabsContent value="all" />
-        <TabsContent value="irs" />
-        <TabsContent value="case" />
       </Tabs>
 
-      <div className="rounded-xl border border-white/10 bg-white/5">
-        <div className="flex items-center justify-end p-4">
+      <div className="rounded-xl border border-white/10 bg-[#141f31] overflow-hidden">
+        <div className="flex items-center justify-start p-4 border-b border-white/5 bg-white/5">
           <div className="relative w-64">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
             <Input
@@ -157,30 +171,39 @@ export default function DocumentsAudit() {
           </div>
         </div>
         <Table>
-          <TableHeader>
+          <TableHeader className="[&_tr]:border-white/5">
             <TableRow>
-              <TableHead>Document Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Date Uploaded</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-white py-5">
+                Document Name
+              </TableHead>
+              <TableHead className="text-white py-5">Type</TableHead>
+              <TableHead className="text-white py-5">
+                Date Uploaded
+              </TableHead>
+              <TableHead className="text-white py-5 text-right">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((d) => (
-              <TableRow key={d.id}>
+              <TableRow
+                key={d.id}
+                className="border-white/5 hover:bg-white/5 transition-colors"
+              >
                 <TableCell>
                   <div className="flex items-center gap-3">
                     {FileIconByName(d.name)}
                     <div>
-                      <div className="font-medium">{d.name}</div>
-                      <div className="text-xs text-white/60">{d.size}</div>
+                      <div className="font-medium text-white/90">{d.name}</div>
+                      <div className="text-xs text-white/50">{d.size}</div>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>{d.type}</TableCell>
+                <TableCell className="text-white/70">{d.type}</TableCell>
                 <TableCell>
-                  <div className="inline-flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-white/60" />
+                  <div className="inline-flex items-center gap-2 text-white/70">
+                    <CalendarDays className="h-4 w-4 text-white/40" />
                     {d.date}
                   </div>
                 </TableCell>
@@ -189,13 +212,22 @@ export default function DocumentsAudit() {
                     size="icon"
                     variant="ghost"
                     onClick={() => setView(d)}
+                    className="text-white/60 hover:bg-white/10 hover:text-white transition-colors"
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+                  >
                     <Download className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </TableCell>
@@ -206,15 +238,24 @@ export default function DocumentsAudit() {
       </div>
 
       <Dialog open={!!view} onOpenChange={() => setView(null)}>
-        <DialogContent className="bg-white/5 border-white/10 text-white">
+        <DialogContent className="bg-[#141f31]/90 backdrop-blur-xl border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>Preview</DialogTitle>
           </DialogHeader>
           {view ? (
-            <div className="text-sm">
-              <p>Name: {view.name}</p>
-              <p>Type: {view.type}</p>
-              <p>Date: {view.date}</p>
+            <div className="text-sm space-y-2">
+              <p>
+                <span className="text-white/60">Name:</span> {view.name}
+              </p>
+              <p>
+                <span className="text-white/60">Type:</span> {view.type}
+              </p>
+              <p>
+                <span className="text-white/60">Date:</span> {view.date}
+              </p>
+              <p>
+                <span className="text-white/60">Size:</span> {view.size}
+              </p>
             </div>
           ) : null}
         </DialogContent>

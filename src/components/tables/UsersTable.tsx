@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, Eye, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -93,11 +94,13 @@ export default function UsersTable() {
         <Table>
           <TableHeader className="[&_tr]:border-white/5">
             <TableRow>
-              <TableHead className="w-[30%] text-white">User</TableHead>
-              <TableHead className="text-white">Plan</TableHead>
-              <TableHead className="text-white">Status</TableHead>
-              <TableHead className="text-white">Joined</TableHead>
-              <TableHead className="text-right text-white">Actions</TableHead>
+              <TableHead className="text-white py-5">User</TableHead>
+              <TableHead className="text-white py-5">Plan</TableHead>
+              <TableHead className="text-white py-5">Status</TableHead>
+              <TableHead className="text-white py-5">Joined</TableHead>
+              <TableHead className="text-right text-white py-5">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -108,44 +111,53 @@ export default function UsersTable() {
                 .slice(0, 2)
                 .join("")
                 .toUpperCase();
-              const planColor =
+              const planStyles =
                 u.plan === "Premium"
-                  ? "bg-blue-500/20 text-blue-300"
+                  ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
                   : u.plan === "Enterprise"
-                    ? "bg-indigo-500/20 text-indigo-300"
+                    ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
                     : u.plan === "Basic"
-                      ? "bg-sky-500/20 text-sky-300"
-                      : "bg-slate-500/20 text-slate-300";
+                      ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                      : "bg-slate-500/10 text-slate-400 border-white/10";
               return (
                 <TableRow
                   key={u.id}
-                  className="border-white/5 hover:bg-white/5"
+                  className="border-white/5 hover:bg-white/5 transition-colors"
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>{initials}</AvatarFallback>
+                      <Avatar className="h-9 w-9 border border-white/10">
+                        <AvatarFallback className="bg-white/5 text-xs text-white/70">{initials}</AvatarFallback>
                       </Avatar>
-                      <div>
-                        <div className="font-medium">{u.name}</div>
-                        <div className="text-xs text-white/60">{u.email}</div>
+                      <div className="text-left">
+                        <div className="font-medium text-white/90">{u.name}</div>
+                        <div className="text-xs text-white/50">{u.email}</div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={planColor}>{u.plan}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className="bg-emerald-500/20 text-emerald-300">
-                      {u.status}
+                    <Badge variant="outline" className={cn("font-medium px-2.5 py-0.5 rounded-md", planStyles)}>
+                      {u.plan}
                     </Badge>
                   </TableCell>
-                  <TableCell>{u.joined}</TableCell>
-                  <TableCell className="text-right space-x-1.5">
+                  <TableCell>
+                    <div className="inline-flex items-center gap-2 group cursor-default">
+                      <div className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </div>
+                      <span className="text-sm font-medium text-emerald-400/90 group-hover:text-emerald-400 transition-colors">
+                        {u.status}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-white/60 text-sm">{u.joined}</TableCell>
+                  <TableCell className="text-right space-x-1">
                     <Button
                       size="icon"
                       variant="ghost"
                       onClick={() => setViewUser(u)}
+                      className="text-white/60 hover:bg-white/10 hover:text-white transition-colors"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -153,6 +165,7 @@ export default function UsersTable() {
                       size="icon"
                       variant="ghost"
                       onClick={() => setDeleteUser(u)}
+                      className="text-white/60 hover:bg-white/10 hover:text-white transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -184,7 +197,7 @@ export default function UsersTable() {
       </div>
 
       <Dialog open={!!viewUser} onOpenChange={() => setViewUser(null)}>
-        <DialogContent className="bg-white/10 border-white/10 text-white">
+        <DialogContent className="bg-[#141f31]/90 backdrop-blur-xl border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>User Details</DialogTitle>
           </DialogHeader>
@@ -219,7 +232,7 @@ export default function UsersTable() {
       </Dialog>
 
       <Dialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
-        <DialogContent className="bg-white/50 border-white/10 text-white">
+        <DialogContent className="bg-[#141f31]/90 backdrop-blur-xl border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
           </DialogHeader>
