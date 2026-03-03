@@ -39,7 +39,7 @@ We collect usage data to improve the service.
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Legal Content</h1>
+        <h1 className="text-2xl font-semibold text-white">Legal Content</h1>
         <p className="text-sm text-white/60">
           Manage Terms of Service and Privacy Policy documents.
         </p>
@@ -126,12 +126,12 @@ function EditorPanel({
   return (
     <Card className="bg-white/5 border-white/10">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="text-white">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between rounded-md border border-white/10 bg-black/30 px-3 py-2">
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-white/60">Formatting</span>
+            <span className="text-white">Formatting</span>
             <button
               onClick={onBold}
               className="hover:text-white/90 text-white/70"
