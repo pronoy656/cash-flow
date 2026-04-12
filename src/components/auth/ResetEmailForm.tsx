@@ -4,16 +4,37 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+import axiosSecure from "@/components/hook/axiosSecure";
+
 export default function ResetEmailForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      router.push("/verify");
-    }, 600);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await axiosSecure.post("/auth/forget-password", { email });
+      if (response.data?.success) {
+        setMessage(response.data.message || "OTP sent successfully");
+        localStorage.setItem("reset_email", email);
+        setTimeout(() => {
+          router.push("/verify");
+        }, 1500);
+      } else {
+        setError("Failed to send reset link.");
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "An error occurred.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -28,10 +49,15 @@ export default function ResetEmailForm() {
           <Input
             type="email"
             required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             className="h-12 bg-white/5 border-white/5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/50"
           />
         </div>
+        
+        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+        {message && <div className="text-green-500 text-sm mt-2">{message}</div>}
         <Button variant="premium" type="submit" className="w-full h-12 text-base" disabled={loading}>
           {loading ? "Sending..." : "Send Reset Link"}
         </Button>

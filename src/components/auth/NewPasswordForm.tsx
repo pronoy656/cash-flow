@@ -5,18 +5,62 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 
+import axiosSecure from "@/components/hook/axiosSecure";
+
 export default function NewPasswordForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      router.push("/overview");
-    }, 600);
+    setError("");
+    setMessage("");
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
+    const email = localStorage.getItem("reset_email");
+    const otp = localStorage.getItem("reset_otp");
+
+    if (!email) {
+      setError("Session expired. Please start over.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axiosSecure.post("/auth/reset-password", { 
+        email, 
+        otp, 
+        newPassword 
+      });
+
+      if (response.data?.success || response.status === 200) {
+        setMessage(response.data?.message || "Password reset successfully.");
+        localStorage.removeItem("reset_email");
+        localStorage.removeItem("reset_otp");
+        setTimeout(() => {
+          router.push("/login");
+        }, 1500);
+      } else {
+        setError("Failed to reset password.");
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "An error occurred.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -32,6 +76,8 @@ export default function NewPasswordForm() {
             <Input
               type={showNewPassword ? "text" : "password"}
               required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
               placeholder="••••••••"
               className="h-12 bg-white/5 border-white/5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/50 pr-12"
             />
@@ -50,6 +96,8 @@ export default function NewPasswordForm() {
             <Input
               type={showConfirmPassword ? "text" : "password"}
               required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
               className="h-12 bg-white/5 border-white/5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/50 pr-12"
             />
@@ -62,6 +110,9 @@ export default function NewPasswordForm() {
             </button>
           </div>
         </div>
+
+        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+        {message && <div className="text-green-500 text-sm mt-2">{message}</div>}
         <Button variant="premium" type="submit" className="w-full h-12 text-base" disabled={loading}>
           {loading ? "Saving..." : "Set New Password"}
         </Button>

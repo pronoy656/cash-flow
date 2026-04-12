@@ -4,10 +4,13 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+import axiosSecure from "@/components/hook/axiosSecure";
+
 export default function VerifyCodeForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState(["", "", "", "", ""]);
+  const [error, setError] = useState("");
 
   const handleChange = (index: number, value: string) => {
     if (value.length > 1) return;
@@ -15,7 +18,6 @@ export default function VerifyCodeForm() {
     newCode[index] = value;
     setCode(newCode);
 
-    // Auto-focus next input
     if (value && index < 4) {
       const nextInput = document.getElementById(`code-${index + 1}`);
       nextInput?.focus();
@@ -29,12 +31,36 @@ export default function VerifyCodeForm() {
     }
   };
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      router.push("/new-password");
-    }, 600);
+    setError("");
+
+    const otp = code.join("");
+    const email = localStorage.getItem("reset_email");
+
+    if (!email) {
+      setError("Session expired. Please try resting password again.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Assuming typical verify endpoint taking { email, otp }
+      const response = await axiosSecure.post("/auth/verify-email", { email, otp });
+      if (response.data?.success || response.status === 200) {
+        // Typically might return a token to reset, or we just pass the OTP later.
+        // We'll store OTP if needed for the next step.
+        localStorage.setItem("reset_otp", otp);
+        router.push("/new-password");
+      } else {
+        setError("Invalid verification code.");
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Verification failed.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -61,6 +87,8 @@ export default function VerifyCodeForm() {
             />
           ))}
         </div>
+
+        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
 
         <Button
           type="submit"
