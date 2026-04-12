@@ -6,17 +6,42 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
+import Cookies from "js-cookie";
+import axiosSecure from "@/components/hook/axiosSecure";
+
 export default function LoginForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      router.push("/overview");
-    }, 600);
+    setError("");
+
+    try {
+      const response = await axiosSecure.post("/auth/login", {
+        email,
+        password,
+      });
+
+      const { data } = response.data || response;
+      const token = data?.token || response.data?.token || response.data;
+      
+      if (token) {
+        Cookies.set("token", token, { expires: 1 });
+        router.push("/overview");
+      } else {
+        setError("Invalid response from server. No token received.");
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Login failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -31,7 +56,9 @@ export default function LoginForm() {
           <Input
             type="email"
             required
-            placeholder="Enter your full name"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
             className="h-12 bg-white/5 border-white/5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/50"
           />
         </div>
@@ -41,6 +68,8 @@ export default function LoginForm() {
             <Input
               type={showPassword ? "text" : "password"}
               required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               className="h-12 bg-white/5 border-white/5 text-white placeholder:text-white/20 focus-visible:ring-blue-500/50 pr-12"
             />
@@ -57,6 +86,10 @@ export default function LoginForm() {
             </button>
           </div>
         </div>
+
+        {error && (
+          <div className="text-red-500 text-sm mt-2">{error}</div>
+        )}
 
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">

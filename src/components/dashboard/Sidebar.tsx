@@ -68,19 +68,20 @@ export default function Sidebar({ active }: { active?: string }) {
         ))}
       </nav>
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarFallback>WR</AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="text-sm font-medium">Will Ray</div>
-              <div className="text-xs text-white/60">Super Admin</div>
-            </div>
-          </div>
-          <Link href="/login" className="text-white/80 hover:text-white">
+        <div className="flex items-center justify-center">
+          <button 
+            type="button" 
+            onClick={() => {
+              import("js-cookie").then((Cookies) => {
+                Cookies.default.remove("token");
+                window.location.href = "/login";
+              });
+            }} 
+            className="flex w-full justify-center items-center gap-2 bg-red-600/90 hover:bg-red-600 text-white font-medium py-2.5 rounded-lg transition-colors shadow-sm"
+          >
             <LogOut className="h-4 w-4" />
-          </Link>
+            <span className="text-sm">Logout</span>
+          </button>
         </div>
       </div>
     </aside>
