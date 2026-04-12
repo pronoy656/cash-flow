@@ -24,7 +24,10 @@ import {
   Cell,
 } from "recharts";
 
-const revenue = [
+import { useState, useEffect } from "react";
+import axiosSecure from "@/components/hook/axiosSecure";
+
+const defaultRevenue = [
   { month: "Jan", value: 12000 },
   { month: "Feb", value: 14500 },
   { month: "Mar", value: 13800 },
@@ -43,6 +46,31 @@ const plans = [
 const pieColors = ["#9ca3af", "#3b82f6", "#8b5cf6", "#22c55e"];
 
 export default function Overview() {
+  const [revenue, setRevenue] = useState(defaultRevenue);
+
+  useEffect(() => {
+    const fetchRevenue = async () => {
+      try {
+        const currentYear = new Date().getFullYear();
+        const response = await axiosSecure.get(`/admin/monthly-revenue?year=${currentYear}`);
+        if (response.data?.success && response.data?.data) {
+          const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          const formattedData = response.data.data.map((item: any) => ({
+            month: monthNames[item.month - 1] || "Unknown",
+            value: item.revenue
+          }));
+          
+          if (formattedData.length > 0) {
+            setRevenue(formattedData);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch revenue", error);
+      }
+    };
+    fetchRevenue();
+  }, []);
+
   const totalUsers = plans.reduce((a, b) => a + b.value, 0);
   return (
     <div className="space-y-6">
@@ -122,7 +150,6 @@ export default function Overview() {
             >
               <LineChart
                 data={revenue}
-                // margin={{ top: 8, right: 20, left: 0, bottom: 8 }}
               >
                 <defs>
                   <linearGradient

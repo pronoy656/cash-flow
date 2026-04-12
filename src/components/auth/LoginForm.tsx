@@ -28,14 +28,20 @@ export default function LoginForm() {
         password,
       });
 
-      const { data } = response.data || response;
-      const token = data?.token || response.data?.token || response.data;
+      // Safely find the token in common response structures
+      const responseData = response.data;
+      const token = 
+        responseData?.token || 
+        responseData?.data?.token || 
+        responseData?.accessToken || 
+        responseData?.data?.accessToken;
       
-      if (token) {
+      if (token && typeof token === "string") {
         Cookies.set("token", token, { expires: 1 });
         router.push("/overview");
       } else {
-        setError("Invalid response from server. No token received.");
+        console.error("Token not found or is not a string:", token);
+        setError("Invalid response from server. Please contact support.");
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed. Please check your credentials.");

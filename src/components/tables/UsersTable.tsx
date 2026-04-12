@@ -1,11 +1,12 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Eye, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import axiosSecure from "@/components/hook/axiosSecure";
 import {
   Dialog,
   DialogContent,
@@ -21,55 +22,86 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 
 type User = {
-  id: string;
+  _id: string;
   name: string;
   email: string;
-  plan: "Free" | "Basic" | "Premium" | "Enterprise";
-  status: "Active" | "Suspended";
-  joined: string;
+  plan: string;
+  status: "active" | "block" | string;
+  createdAt: string;
+  image?: string;
 };
 
-const data: User[] = [
-  {
-    id: "1",
-    name: "Jane Cooper",
-    email: "jane@example.com",
-    plan: "Premium",
-    status: "Active",
-    joined: "2025-09-01",
-  },
-  {
-    id: "2",
-    name: "John Doe",
-    email: "john@example.com",
-    plan: "Basic",
-    status: "Active",
-    joined: "2025-07-12",
-  },
-  {
-    id: "3",
-    name: "Lisa Frank",
-    email: "lisa@example.com",
-    plan: "Free",
-    status: "Suspended",
-    joined: "2025-04-18",
-  },
-];
-
 export default function UsersTable() {
+  const [users, setUsers] = useState<User[]>([]);
   const [query, setQuery] = useState("");
   const [viewUser, setViewUser] = useState<User | null>(null);
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
+  
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [page]);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosSecure.get(`/user?page=${page}&limit=10`);
+      if (res.data?.success) {
+        setUsers(res.data.data);
+        setTotalPages(res.data.pagination?.totalPage || 1);
+      }
+    } catch (err) {
+      console.error("Failed to fetch users", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async (user: User) => {
+    const newStatus = user.status === "active" ? "block" : "active";
+    try {
+      // Optimistically update
+      setUsers(users.map(u => u._id === user._id ? { ...u, status: newStatus } : u));
+      // API call to update status using admin endpoint
+      await axiosSecure.patch(`/admin/update-user/${user._id}`, {
+        status: newStatus
+      });
+      toast.success(`User status updated to ${newStatus}`);
+    } catch (err: any) {
+      console.error("Failed to update status", err);
+      toast.error(err.response?.data?.message || "Failed to update user status");
+      // Revert on failure
+      setUsers(users.map(u => u._id === user._id ? { ...u, status: user.status } : u));
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteUser) return;
+    try {
+      await axiosSecure.delete(`/admin/delete-account/${deleteUser._id}`);
+      setUsers(users.filter(u => u._id !== deleteUser._id));
+      setDeleteUser(null);
+      toast.success("User deleted successfully");
+    } catch (err: any) {
+      console.error("Failed to delete user", err);
+      toast.error(err.response?.data?.message || "Failed to delete user");
+    }
+  };
 
   const rows = useMemo(() => {
     const q = query.toLowerCase();
-    return data.filter(
+    return users.filter(
       (u) =>
-        u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
+        (u.name && u.name.toLowerCase().includes(q)) || (u.email && u.email.toLowerCase().includes(q)),
     );
-  }, [query]);
+  }, [query, users]);
 
   return (
     <div className="space-y-4">
@@ -106,11 +138,8 @@ export default function UsersTable() {
           <TableBody>
             {rows.map((u) => {
               const initials = u.name
-                .split(" ")
-                .map((p) => p[0])
-                .slice(0, 2)
-                .join("")
-                .toUpperCase();
+                ? u.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()
+                : "U";
               const planStyles =
                 u.plan === "Premium"
                   ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
@@ -119,14 +148,17 @@ export default function UsersTable() {
                     : u.plan === "Basic"
                       ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
                       : "bg-slate-500/10 text-slate-400 border-white/10";
+              const isActive = u.status === "active";
+              
               return (
                 <TableRow
-                  key={u.id}
+                  key={u._id}
                   className="border-white/5 hover:bg-white/5 transition-colors"
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9 border border-white/10">
+                        {u.image && <AvatarImage src={u.image} alt={u.name} />}
                         <AvatarFallback className="bg-white/5 text-xs text-white/70">{initials}</AvatarFallback>
                       </Avatar>
                       <div className="text-left">
@@ -137,21 +169,20 @@ export default function UsersTable() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={cn("font-medium px-2.5 py-0.5 rounded-md", planStyles)}>
-                      {u.plan}
+                      {u.plan || "Free"}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="inline-flex items-center gap-2 group cursor-default">
-                      <div className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </div>
-                      <span className="text-sm font-medium text-emerald-400/90 group-hover:text-emerald-400 transition-colors">
-                        {u.status}
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleToggleStatus(u)}>
+                      <Switch checked={isActive} />
+                      <span className={cn("text-sm font-medium transition-colors", isActive ? "text-emerald-400" : "text-white/40")}>
+                        {isActive ? "Active" : "Blocked"}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-white/60 text-sm">{u.joined}</TableCell>
+                  <TableCell className="text-white/60 text-sm">
+                    {new Date(u.createdAt).toLocaleDateString()}
+                  </TableCell>
                   <TableCell className="text-right space-x-1">
                     <Button
                       size="icon"
@@ -177,17 +208,21 @@ export default function UsersTable() {
         </Table>
         <div className="flex items-center justify-between px-4 py-3 text-xs text-white/70 border-t border-white/10">
           <span>
-            Showing 1-{rows.length} of {data.length} users
+            Showing {rows.length} users (Page {page} of {totalPages})
           </span>
           <div className="space-x-2">
             <Button
               variant="outline"
+              disabled={page <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
               className="bg-white/5 border-white/10 text-white"
             >
               Previous
             </Button>
             <Button
               variant="outline"
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               className="bg-white/5 border-white/10 text-white"
             >
               Next
@@ -221,7 +256,7 @@ export default function UsersTable() {
               </p>
               <p>
                 <span className="text-muted-foreground">Joined:</span>{" "}
-                {viewUser.joined}
+                {new Date(viewUser.createdAt).toLocaleDateString()}
               </p>
             </div>
           ) : null}
@@ -246,9 +281,7 @@ export default function UsersTable() {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => {
-                setDeleteUser(null);
-              }}
+              onClick={handleDelete}
             >
               Delete
             </Button>

@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: "Admin dashboard for Income-Expense Tracker",
 };
 
+import { Toaster } from "@/components/ui/sonner";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,7 +31,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <TooltipProvider>{children}</TooltipProvider>
+        <TooltipProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </TooltipProvider>
       </body>
     </html>
   );
