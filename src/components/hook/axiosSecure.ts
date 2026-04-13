@@ -22,18 +22,22 @@ axiosSecure.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle 401/403 errors and logout
+// Response interceptor to handle 401/403 errors
 axiosSecure.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      // Clear token and redirect to login
-      Cookies.remove('token');
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+    if (error.response) {
+      if (error.response.status === 401) {
+        // 401 = token missing or expired → logout
+        Cookies.remove('token');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
       }
+      // 403 = authenticated but insufficient role → do NOT logout,
+      // let the caller handle the error with a toast/message
     }
     return Promise.reject(error);
   }
