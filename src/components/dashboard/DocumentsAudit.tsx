@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
   File as FileIcon,
   CalendarDays,
+  Loader2,
 } from "lucide-react";
 import {
   Table,
@@ -28,71 +29,120 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import axiosSecure from "@/components/hook/axiosSecure";
+import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-type Doc = {
+type Notice = {
+  _id: string;
   id: string;
-  name: string;
-  type: "IRS Notice" | "Case File" | "Report" | "Other";
-  date: string;
-  size: string;
+  type: string;
+  document: string;
+  createdAt: string;
+  updatedAt: string;
 };
-
-const docs: Doc[] = [
-  {
-    id: "1",
-    name: "IRS_Notice_CP2000.pdf",
-    type: "IRS Notice",
-    date: "2026-02-08",
-    size: "2.4 MB",
-  },
-  {
-    id: "2",
-    name: "Case_Status_Update_v2.docx",
-    type: "Case File",
-    date: "2026-02-07",
-    size: "1.1 MB",
-  },
-  {
-    id: "3",
-    name: "Audit_Report_Q4_2025.pdf",
-    type: "Report",
-    date: "2026-02-05",
-    size: "4.8 MB",
-  },
-  {
-    id: "4",
-    name: "Tax_Return_2024.pdf",
-    type: "IRS Notice",
-    date: "2026-02-01",
-    size: "3.2 MB",
-  },
-  {
-    id: "5",
-    name: "Evidence_Photo_001.jpg",
-    type: "Case File",
-    date: "2026-01-29",
-    size: "4.5 MB",
-  },
-];
 
 export default function DocumentsAudit() {
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<Doc | null>(null);
+  const [view, setView] = useState<Notice | null>(null);
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [uploadType, setUploadType] = useState("IRS Notice");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const filtered = docs.filter((d) => {
+  useEffect(() => {
+    fetchNotices();
+  }, []);
+
+  const fetchNotices = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosSecure.get("/notices");
+      if (res.data.success) {
+        setNotices(res.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching notices:", error);
+      toast.error("Failed to load documents");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("type", uploadType);
+    formData.append("document", file);
+
+    try {
+      setUploading(true);
+      const res = await axiosSecure.post("/notices", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      if (res.data.success) {
+        toast.success("Document uploaded successfully");
+        fetchNotices();
+      }
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      toast.error("Failed to upload document");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this document?")) return;
+
+    try {
+      const res = await axiosSecure.delete(`/notices/${id}`);
+      if (res.data.success) {
+        toast.success("Document deleted successfully");
+        setNotices(notices.filter((n) => n._id !== id));
+      }
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast.error("Failed to delete document");
+    }
+  };
+
+  const handleDownload = (url: string, name: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name || "document.pdf";
+    link.target = "_blank";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filtered = notices.filter((d) => {
     const q = query.toLowerCase();
-    const match =
-      d.name.toLowerCase().includes(q) ||
-      d.type.toLowerCase().includes(q) ||
-      d.date.includes(q);
+    const type = d.type.toLowerCase();
+    const name = d.document.split("/").pop()?.toLowerCase() || "";
+    const date = new Date(d.createdAt).toLocaleDateString().toLowerCase();
+
+    const match = name.includes(q) || type.includes(q) || date.includes(q);
     if (!match) return false;
     if (tab === "all") return true;
     if (tab === "irs") return d.type === "IRS Notice";
-    if (tab === "case") return d.type === "Case File";
+    if (tab === "case") return d.type === "Case Status";
     return true;
   });
-  const rows = filtered;
 
   function FileIconByName(filename: string) {
     const lower = filename.toLowerCase();
@@ -108,6 +158,10 @@ export default function DocumentsAudit() {
       return <ImageIcon className="h-5 w-5 text-indigo-300" />;
     return <FileIcon className="h-5 w-5 text-slate-300" />;
   }
+
+  const getFileName = (url: string) => {
+    return url.split("/").pop() || "Document";
+  };
 
   return (
     <div className="space-y-6">
@@ -144,13 +198,43 @@ export default function DocumentsAudit() {
         <div className="mt-4 rounded-xl border border-white/10 bg-[#141f31] p-6 shadow-sm">
           <div className="border-2 border-dashed border-white/10 rounded-lg p-10 text-center bg-white/5 hover:bg-white/[0.07] transition-colors">
             <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
-              <UploadCloud className="h-6 w-6 text-white/70" />
+              {uploading ? (
+                <Loader2 className="h-6 w-6 text-white/70 animate-spin" />
+              ) : (
+                <UploadCloud className="h-6 w-6 text-white/70" />
+              )}
             </div>
             <div className="text-lg font-medium">Upload New Documents</div>
             <p className="text-xs text-white/60 mb-4">
-              Drag and drop your files here, or click to browse
+              Select document type and click to browse
             </p>
-            <Button variant="premium">Select Files</Button>
+            <div className="flex flex-col items-center gap-4 max-w-xs mx-auto">
+              <Select value={uploadType} onValueChange={setUploadType}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#141f31] border-white/10 text-white">
+                  <SelectItem value="IRS Notice">IRS Notice</SelectItem>
+                  <SelectItem value="Case Status">Case Status</SelectItem>
+                  <SelectItem value="Report">Report</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="premium"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? "Uploading..." : "Select Files"}
+              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleUpload}
+                accept=".pdf,.jpg,.jpeg,.png,.docx"
+              />
+            </div>
             <p className="text-xs text-white/40 mt-3">
               Supported formats: PDF, JPG, PNG, DOCX (Max 25MB)
             </p>
@@ -186,53 +270,75 @@ export default function DocumentsAudit() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((d) => (
-              <TableRow
-                key={d.id}
-                className="border-white/5 hover:bg-white/5 transition-colors"
-              >
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    {FileIconByName(d.name)}
-                    <div>
-                      <div className="font-medium text-white/90">{d.name}</div>
-                      <div className="text-xs text-white/50">{d.size}</div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="text-white/70">{d.type}</TableCell>
-                <TableCell>
-                  <div className="inline-flex items-center gap-2 text-white/70">
-                    <CalendarDays className="h-4 w-4 text-white/40" />
-                    {d.date}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right space-x-1.5">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setView(d)}
-                    className="text-white/60 hover:bg-white/10 hover:text-white transition-colors"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-white/60 hover:bg-white/10 hover:text-white transition-colors"
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-white/60 hover:bg-white/10 hover:text-white transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-32 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-white/20" />
                 </TableCell>
               </TableRow>
-            ))}
+            ) : filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-32 text-center text-white/40">
+                  No documents found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((d) => (
+                <TableRow
+                  key={d._id}
+                  className="border-white/5 hover:bg-white/5 transition-colors"
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      {FileIconByName(getFileName(d.document))}
+                      <div>
+                        <div className="font-medium text-white/90">
+                          {getFileName(d.document)}
+                        </div>
+                        <div className="text-xs text-white/50">
+                          {new Date(d.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-white/70">{d.type}</TableCell>
+                  <TableCell>
+                    <div className="inline-flex items-center gap-2 text-white/70">
+                      <CalendarDays className="h-4 w-4 text-white/40" />
+                      {new Date(d.createdAt).toLocaleDateString()}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right space-x-1.5">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setView(d)}
+                      className="text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() =>
+                        handleDownload(d.document, getFileName(d.document))
+                      }
+                      className="text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleDelete(d._id)}
+                      className="text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -243,19 +349,45 @@ export default function DocumentsAudit() {
             <DialogTitle>Preview</DialogTitle>
           </DialogHeader>
           {view ? (
-            <div className="text-sm space-y-2">
-              <p>
-                <span className="text-white/60">Name:</span> {view.name}
-              </p>
-              <p>
-                <span className="text-white/60">Type:</span> {view.type}
-              </p>
-              <p>
-                <span className="text-white/60">Date:</span> {view.date}
-              </p>
-              <p>
-                <span className="text-white/60">Size:</span> {view.size}
-              </p>
+            <div className="text-sm space-y-4">
+              <div className="aspect-square w-full rounded-lg bg-white/5 flex items-center justify-center overflow-hidden border border-white/10">
+                {view.document.toLowerCase().endsWith(".pdf") ? (
+                  <iframe
+                    src={view.document}
+                    className="w-full h-full border-none"
+                    title="PDF Preview"
+                  />
+                ) : (
+                  <img
+                    src={view.document}
+                    alt="Preview"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                )}
+              </div>
+              <div className="space-y-2">
+                <p>
+                  <span className="text-white/60 font-medium">Name:</span>{" "}
+                  {getFileName(view.document)}
+                </p>
+                <p>
+                  <span className="text-white/60 font-medium">Type:</span>{" "}
+                  {view.type}
+                </p>
+                <p>
+                  <span className="text-white/60 font-medium">Uploaded:</span>{" "}
+                  {new Date(view.createdAt).toLocaleString()}
+                </p>
+              </div>
+              <Button
+                className="w-full"
+                variant="premium"
+                onClick={() =>
+                  handleDownload(view.document, getFileName(view.document))
+                }
+              >
+                Download Document
+              </Button>
             </div>
           ) : null}
         </DialogContent>
