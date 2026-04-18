@@ -56,6 +56,8 @@ export default function DocumentsAudit() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadType, setUploadType] = useState("IRS Notice");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -105,18 +107,26 @@ export default function DocumentsAudit() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this document?")) return;
+  const handleDelete = (id: string) => {
+    setDeletingId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingId) return;
 
     try {
-      const res = await axiosSecure.delete(`/notices/${id}`);
+      const res = await axiosSecure.delete(`/notices/${deletingId}`);
       if (res.data.success) {
         toast.success("Document deleted successfully");
-        setNotices(notices.filter((n) => n._id !== id));
+        setNotices(notices.filter((n) => n._id !== deletingId));
       }
     } catch (error) {
       console.error("Error deleting document:", error);
       toast.error("Failed to delete document");
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setDeletingId(null);
     }
   };
 
@@ -390,6 +400,33 @@ export default function DocumentsAudit() {
               </Button>
             </div>
           ) : null}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="bg-[#141f31] border-white/10 text-white max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 text-sm text-white/70">
+            Are you sure you want to delete this document? This action cannot be
+            undone.
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              className="text-white/60 hover:bg-white/5 hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              className="bg-rose-500 hover:bg-rose-600"
+            >
+              Delete
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
