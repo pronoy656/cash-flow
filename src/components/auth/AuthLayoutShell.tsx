@@ -16,12 +16,10 @@ export default function AuthLayoutShell({
     <div className="min-h-screen grid md:grid-cols-2 bg-[#090E1A] text-white">
       {/* Left Side: Hero Image and Text */}
       <div className="relative hidden md:block overflow-hidden">
-        <Image
-          src="/Accept tasks-bro 1.png"
+        <img
+          src="/hero-auth.png"
           alt="Auth Hero"
-          priority
-          fill
-          className="object-cover"
+          className="w-full h-full object-cover"
         />
         {/* Dark Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
@@ -49,11 +47,10 @@ export default function AuthLayoutShell({
               <div className="absolute inset-0 bg-blue-500/5" />
 
               <div className="relative w-44 h-44">
-                <Image
-                  src="/image 11 (2).png"
+                <img
+                  src="/image-11-1.png"
                   alt="CashFlowIQ Logo"
-                  fill
-                  className="object-contain"
+                  className="w-full h-full object-contain"
                 />
               </div>
             </div>

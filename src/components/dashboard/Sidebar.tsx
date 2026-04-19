@@ -26,7 +26,7 @@ const items: Array<{
 }> = [
     { href: "/overview", label: "Overview", Icon: LayoutDashboard },
     { href: "/users", label: "User Management", Icon: Users },
-    { href: "/subscription", label: "Subscription", Icon: CreditCard },
+    // { href: "/subscription", label: "Subscription", Icon: CreditCard },
     { href: "/documents", label: "Documents & Audit", Icon: FileText },
     { href: "/chat", label: "Chat", Icon: MessageSquare },
     { href: "/legal", label: "Legal & Content", Icon: Scale },
@@ -40,10 +40,11 @@ export default function Sidebar({ active }: { active?: string }) {
       <div className="flex items-center justify-center">
         <div className="p-3 rounded-xl">
           <Image
-            src="/image 11 (1).png"
+            src="/logo.png"
             alt="CashFlowIQ logo"
             width={82}
             height={72}
+            unoptimized
           />
         </div>
       </div>
@@ -69,14 +70,14 @@ export default function Sidebar({ active }: { active?: string }) {
       </nav>
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
         <div className="flex items-center justify-center">
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => {
               import("js-cookie").then((Cookies) => {
                 Cookies.default.remove("token");
                 window.location.href = "/login";
               });
-            }} 
+            }}
             className="flex w-full justify-center items-center gap-2 bg-red-600/90 hover:bg-red-600 text-white font-medium py-2.5 rounded-lg transition-colors shadow-sm"
           >
             <LogOut className="h-4 w-4" />
